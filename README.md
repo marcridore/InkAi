@@ -32,6 +32,7 @@ StoryForge is an innovative AI-powered content editor inspired by [Blinkshot](ht
 - [ ] Add support for more languages and translation models
 - [ ] Enhance the comic view with panel layout customization
 - [ ] Implement collaborative editing features
+- [ ] Get published stories in a marketplace.
 
 ## Acknowledgements
 
