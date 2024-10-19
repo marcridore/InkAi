@@ -34,6 +34,13 @@ StoryForge is an innovative AI-powered content editor inspired by [Blinkshot](ht
 - [ ] Implement collaborative editing features
 - [ ] Get published stories in a marketplace.
 
+![Screen Shot 2024-10-19 at 5 43 16 PM](https://github.com/user-attachments/assets/1f9bef9f-7496-4d04-9850-29b0ab836544)
+
+![Screen Shot 2024-10-19 at 5 44 33 PM](https://github.com/user-attachments/assets/d4448481-b5f0-45c6-9b4e-80821aee4317)
+![Screen Shot 2024-10-19 at 5 45 10 PM](https://github.com/user-attachments/assets/f99c0888-0fed-4058-831d-2b29f6fab8cb)
+![Screen Shot 2024-10-19 at 5 45 25 PM](https://github.com/user-attachments/assets/d6f339b2-bb8d-4606-8083-a1bd4ab13db9)
+
+
 ## Acknowledgements
 
 This project was inspired by [Blinkshot](https://github.com/Nutlope/blinkshot). We've expanded on the concept to create a comprehensive tool for content creators.
