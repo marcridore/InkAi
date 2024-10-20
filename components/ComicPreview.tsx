@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
-
-type Panel = {
-  type: 'image' | 'text';
-  content: string;
-  size: 'small' | 'medium' | 'large';
-  speechBubble?: boolean;
-};
-
-type ComicPage = {
-  panels: Panel[];
-};
+import { ComicPage } from '@/types';
+import { Button } from '@/components/ui/button';
 
 type ComicPreviewProps = {
   pages: ComicPage[];
@@ -30,7 +21,7 @@ const ComicPreview: React.FC<ComicPreviewProps> = ({ pages }) => {
     setCurrentPage((prev) => (prev - 1 + pages.length) % pages.length);
   };
 
-  const renderPanel = (panel: Panel, index: number) => {
+  const renderPanel = (panel: ComicPage['panels'][number], index: number) => {
     const panelStyle: React.CSSProperties = {
       border: '2px solid black',
       padding: '10px',
@@ -94,109 +85,59 @@ const ComicPreview: React.FC<ComicPreviewProps> = ({ pages }) => {
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', backgroundColor: '#f0f0f0', padding: '20px', borderRadius: '10px', boxShadow: '0 0 10px rgba(0,0,0,0.1)', position: 'relative' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{ marginRight: '10px' }}>
-          Background Color:
-          <input
-            type="color"
-            value={backgroundColor}
-            onChange={(e) => setBackgroundColor(e.target.value)}
-            style={{ marginLeft: '5px' }}
-          />
-        </label>
-        <label>
-          Font Color:
-          <input
-            type="color"
-            value={fontColor}
-            onChange={(e) => setFontColor(e.target.value)}
-            style={{ marginLeft: '5px' }}
-          />
-        </label>
+    <div className="max-w-4xl mx-auto bg-gray-100 p-6 rounded-lg shadow-lg">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Comic Preview</h2>
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center">
+            <span className="mr-2">Background:</span>
+            <input
+              type="color"
+              value={backgroundColor}
+              onChange={(e) => setBackgroundColor(e.target.value)}
+              className="w-8 h-8 rounded"
+            />
+          </label>
+          <label className="flex items-center">
+            <span className="mr-2">Font:</span>
+            <input
+              type="color"
+              value={fontColor}
+              onChange={(e) => setFontColor(e.target.value)}
+              className="w-8 h-8 rounded"
+            />
+          </label>
+        </div>
       </div>
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(2, 1fr)', 
-        gap: '10px', 
-        padding: '20px',
-        backgroundColor: backgroundColor,
-        border: '2px solid #000',
-        borderRadius: '5px',
-        boxShadow: '0 0 15px rgba(0,0,0,0.2)',
-      }}>
-        {pages[currentPage].panels.map(renderPanel)}
+      
+      <div className="bg-white p-4 rounded-lg shadow mb-4" style={{ backgroundColor }}>
+        <div className="grid grid-cols-2 gap-4">
+          {pages[currentPage].panels.map(renderPanel)}
+        </div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', marginTop: '20px' }}>
-        <button onClick={prevPage} style={buttonStyle}>
-          <ChevronLeft /> Previous Page
-        </button>
-        <span style={{ fontFamily: 'Comic Sans MS, cursive', fontSize: '18px', alignSelf: 'center', color: fontColor }}>
+      
+      <div className="flex justify-between items-center">
+        <Button onClick={prevPage} variant="outline">
+          <ChevronLeft className="w-4 h-4 mr-2" />
+          Previous Page
+        </Button>
+        <span className="text-lg font-semibold">
           Page {currentPage + 1} of {pages.length}
         </span>
-        <button onClick={nextPage} style={buttonStyle}>
-          Next Page <ChevronRight />
-        </button>
+        <Button onClick={nextPage} variant="outline">
+          Next Page
+          <ChevronRight className="w-4 h-4 ml-2" />
+        </Button>
       </div>
-      <div style={{
-        position: "absolute",
-        top: "50px",
-        left: "10px",
-        backgroundColor: "#4B5563",
-        color: "white",
-        padding: "5px 10px",
-        borderRadius: "5px",
-        display: "flex",
-        alignItems: "center",
-        cursor: "pointer",
-      }} className="tooltip">
-        <Info size={16} style={{ marginRight: "5px" }} />
-        Info
-        <span className="tooltiptext">To add a new comic page, click "Add New Page" in the edit panel on the left.</span>
+      
+      <div className="mt-4 bg-blue-100 p-3 rounded-lg flex items-center">
+        <Info className="w-5 h-5 mr-2 text-blue-500" />
+        <p className="text-sm text-blue-700">
+          To add a new comic page, click "Add New Page" in the edit panel on the left.
+        </p>
       </div>
-      <style jsx>{`
-        .tooltip {
-          position: relative;
-          display: inline-block;
-        }
-        .tooltip .tooltiptext {
-          visibility: hidden;
-          width: 200px;
-          background-color: #555;
-          color: #fff;
-          text-align: center;
-          border-radius: 6px;
-          padding: 5px;
-          position: absolute;
-          z-index: 1;
-          top: 125%;
-          left: 0;
-          margin-left: 0;
-          margin-top: 5px;
-          opacity: 0;
-          transition: opacity 0.3s;
-        }
-        .tooltip:hover .tooltiptext {
-          visibility: visible;
-          opacity: 1;
-        }
-      `}</style>
     </div>
   );
-};
-
-const buttonStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  padding: '10px 15px',
-  backgroundColor: '#4a4a4a',
-  color: 'white',
-  border: 'none',
-  borderRadius: '5px',
-  cursor: 'pointer',
-  fontFamily: 'Comic Sans MS, cursive',
-  fontSize: '16px',
-  transition: 'background-color 0.3s',
 };
 
 export default ComicPreview;

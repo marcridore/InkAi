@@ -5,7 +5,7 @@ import { Trash2, Plus, RefreshCw, Upload } from 'lucide-react';
 import { useDebouncedCallback } from 'use-debounce';
 import Spinner from '@/components/spinner';
 import ProgressIndicator from '@/components/ui/ProgressIndicator';
-import { ContentBlock, PageProps, ImageResponse } from '@/types';
+import { ContentBlock, PageProps, ImageResponse } from '@/types'
 
 const Page: React.FC<PageProps> = ({
   index,
@@ -441,9 +441,9 @@ const Page: React.FC<PageProps> = ({
                       Reset Page
                     </Button>
                     <Button
-                      onClick={handleContinueStory}
+                      onClick={() => onContinueStory(selectedText?.text || '')}
                       size="sm"
-                      disabled={!selectedText || selectedText.blockIndex !== idx}
+                      disabled={!selectedText}
                     >
                       <Plus style={{ width: '1rem', height: '1rem', marginRight: '0.25rem' }} />
                       Continue Story

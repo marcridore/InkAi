@@ -21,6 +21,7 @@ type EditingPanelProps = {
   iterativeMode: boolean;
   isGeneratingDocx: boolean;
   storyPrompt: string;
+ 
   generateContent: (pageIndex: number, selectedText: string) => Promise<string>; // New prop
 };
 
@@ -135,7 +136,7 @@ const EditingPanel: React.FC<EditingPanelProps> = ({
               onAddVideo={(videoUrl) => {
                 console.log('Video functionality is currently disabled');
               }}
-              onContinueStory={(selectedText) => handleContinueStory(index, selectedText)}
+              onContinueStory={(selectedText: string) => handleContinueStory(index, selectedText)}
             />
           </motion.div>
         ))}

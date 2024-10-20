@@ -22,6 +22,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "docx": "^9.0.1",
+    "dompurify": "^3.1.7",
     "epub-gen": "^0.1.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.11.9",
@@ -49,7 +50,10 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/dompurify": "^3.0.5",
+    "@types/file-saver": "^2.0.7",
     "@types/jszip": "^3.4.1",
+    "@types/lodash": "^4.17.12",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -4,15 +4,11 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Maximize, Minimize } from 'lucide-react';
 import TTSButton from './TTSButton';
 import dynamic from 'next/dynamic';
-
+import { Block } from '@/types'; 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
 
-type Block = {
-  type: 'text' | 'image';
-  content: string | { b64_json: string } | null;
-  generating?: boolean;
-};
+
 
 type Page = {
   blocks: Block[];
@@ -43,10 +39,20 @@ const EditableBookPreview: React.FC<EditableBookPreviewProps> = ({
   }, [pages.length]);
 
   const handleTextChange = useCallback((content: string, blockIndex: number) => {
-    const newBlocks = [...pages[currentPage].blocks];
-    newBlocks[blockIndex] = { ...newBlocks[blockIndex], content };
-    updatePageContent(currentPage, { ...pages[currentPage], blocks: newBlocks });
+    const block = pages[currentPage].blocks[blockIndex];
+  
+    if (block.type === 'text') {
+      const newBlock = { ...block, content };
+      const newBlocks = [...pages[currentPage].blocks];
+      newBlocks[blockIndex] = newBlock;
+      updatePageContent(currentPage, { ...pages[currentPage], blocks: newBlocks });
+    } else {
+      // Optionally handle other types or throw an error
+      console.warn(`Attempted to update content of a non-text block at index ${blockIndex}`);
+    }
   }, [currentPage, pages, updatePageContent]);
+  
+  
 
   const toggleFullScreen = () => {
     setIsFullScreen(!isFullScreen);

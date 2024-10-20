@@ -1,19 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { jsPDF } from 'jspdf';
-import { Document, Packer, Paragraph, TextRun, ImageRun, IImageOptions } from 'docx';
 import { Button } from "@/components/ui/button";
 import { Download, Maximize, Minimize, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-
-type Block = {
-  type: 'text' | 'image';
-  content: string | { b64_json: string } | null;
-};
-
-type PageContent = {
-  blocks: Block[];
-};
+import { PageContent } from '@/types';
+import { generatePDF, generateDOCX, downloadEPUB } from '@/lib/helpers';
+import toast from 'react-hot-toast';
+import DOMPurify from 'dompurify';
+import { saveAs } from 'file-saver';
 
 type FinalBookPreviewProps = {
   pages: PageContent[];
@@ -35,19 +29,29 @@ const FinalBookPreview: React.FC<FinalBookPreviewProps> = ({ pages, language }) 
 
   const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
 
-  const downloadPDF = () => {
-    // Implement PDF download logic here
-    console.log('Downloading PDF...');
-  };
+  const handleDownload = async (format: 'pdf' | 'docx' | 'epub') => {
+    try {
+      let fileBlob: Blob | null = null;
 
-  const downloadDOCX = () => {
-    // Implement DOCX download logic here
-    console.log('Downloading DOCX...');
-  };
-
-  const downloadEPUB = () => {
-    // Implement EPUB download logic here
-    console.log('Downloading EPUB...');
+      switch (format) {
+        case 'pdf':
+          fileBlob = generatePDF(pages, language);
+          saveAs(fileBlob, `storybook_${language}.pdf`);
+          break;
+        case 'docx':
+          fileBlob = await generateDOCX(pages, language);
+          saveAs(fileBlob, `storybook_${language}.docx`);
+          break;
+        case 'epub':
+          fileBlob = await downloadEPUB(pages, language);
+          saveAs(fileBlob, `storybook_${language}.epub`);
+          break;
+      }
+      toast.success(`${format.toUpperCase()} downloaded successfully!`);
+    } catch (error) {
+      console.error(`Error generating ${format.toUpperCase()}:`, error);
+      toast.error(`Failed to generate ${format.toUpperCase()}. Please try again.`);
+    }
   };
 
   return (
@@ -73,7 +77,10 @@ const FinalBookPreview: React.FC<FinalBookPreviewProps> = ({ pages, language }) 
               {pages.length > 0 && pages[currentPage]?.blocks.map((block, index) => (
                 <div key={index} className="mb-4">
                   {block.type === 'text' && (
-                    <p className="text-black text-lg leading-relaxed">{block.content as string}</p>
+                    <div 
+                      className="text-black text-lg leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.content as string) }}
+                    />
                   )}
                   {block.type === 'image' && block.content && typeof block.content === 'object' && 'b64_json' in block.content && (
                     <div className="relative w-full h-64 md:h-96">
@@ -108,15 +115,15 @@ const FinalBookPreview: React.FC<FinalBookPreviewProps> = ({ pages, language }) 
         </div>
         
         <div className="flex justify-center space-x-4">
-          <Button onClick={downloadPDF} variant="outline">
+          <Button onClick={() => handleDownload('pdf')} variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Download as PDF
           </Button>
-          <Button onClick={downloadDOCX} variant="outline">
+          <Button onClick={() => handleDownload('docx')} variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Download as DOCX
           </Button>
-          <Button onClick={downloadEPUB} variant="outline">
+          <Button onClick={() => handleDownload('epub')} variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Download as EPUB
           </Button>

@@ -2,13 +2,9 @@ import React from 'react';
 import Image from 'next/image';
 import TTSButton from './TTSButton';
 import dynamic from 'next/dynamic';
-
+import { Block } from '@/types'; 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
-type Block = {
-  type: string;
-  content: any;
-};
 
 type PageContent = {
   blocks: Block[];

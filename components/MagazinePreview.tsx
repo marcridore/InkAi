@@ -9,26 +9,21 @@ import { Download, Upload, Maximize, Minimize, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Slider } from '@/components/ui/slider';
 import { Select } from '@/components/ui/select';
+import { Block, PageContent } from '@/types';
 
-interface Block {
-  id: string;
-  type: 'text' | 'image';
-  content: string | { b64_json: string } | null;
-  size: 'small' | 'medium' | 'large';
-  column?: number;
-}
 
 interface Page {
-  blocks: Block[];
-  columns: number;
-  backgroundImage?: string;
-}
+    blocks: Block[];
+    columns: number; // columns is required here
+    backgroundImage?: string;
+  }
 
 interface MagazinePreviewProps {
-  pages: Page[];
-  language: string;
-  updatePageContent?: (pageIndex: number, newPage: Page) => void;
-}
+    pages: PageContent[]; // Accept PageContent[] from props
+    language: string;
+    updatePageContent?: (pageIndex: number, newPage: PageContent) => void;
+  }
+  
 
 interface BackgroundImageProps {
   backgroundImage: string | undefined;
@@ -63,7 +58,8 @@ const BackgroundImage = memo(({ backgroundImage, onBackgroundImageUpload }: Back
 ));
 
 const MagazinePreview: React.FC<MagazinePreviewProps> = ({ pages, language, updatePageContent }) => {
-  const [pagesState, setPagesState] = useState(pages);
+    const [pagesState, setPagesState] = useState<Page[]>([]);
+
   const [backgroundColor, setBackgroundColor] = useState('#f0f0f0');
   const [textColor, setTextColor] = useState('#333333');
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -74,12 +70,14 @@ const MagazinePreview: React.FC<MagazinePreviewProps> = ({ pages, language, upda
   const [brandColor, setBrandColor] = useState('#000000');
 
   useEffect(() => {
-    setPagesState(pages.map(page => ({
+    const transformedPages: Page[] = pages.map(page => ({
       ...page,
-      columns: page.columns || 1,
+      columns: page.columns || 1, // Ensure columns is defined
       backgroundImage: page.backgroundImage || undefined
-    })));
+    }));
+    setPagesState(transformedPages);
   }, [pages]);
+  
 
   const updatePageColumns = useCallback((pageIndex: number, columns: number) => {
     setPagesState(prevState => {
@@ -88,8 +86,12 @@ const MagazinePreview: React.FC<MagazinePreviewProps> = ({ pages, language, upda
       const newBlocks = redistributeBlocks(currentPage.blocks, columns);
       newPages[pageIndex] = { ...currentPage, columns, blocks: newBlocks };
       if (updatePageContent) {
-        updatePageContent(pageIndex, newPages[pageIndex]);
+        // Since columns is a number in Page and optional in PageContent, this is acceptable
+        updatePageContent(pageIndex, {
+          ...pagesState[pageIndex],
+        });
       }
+      
       return newPages;
     });
   }, [updatePageContent]);
@@ -263,9 +265,14 @@ const MagazinePreview: React.FC<MagazinePreviewProps> = ({ pages, language, upda
       if (page.backgroundImage) {
         pdf.addImage(page.backgroundImage, 'JPEG', 0, 0, pageWidth, pageHeight);
         pdf.setFillColor(255, 255, 255);
-        pdf.setGState(new pdf.GState({ opacity: 0.5 }));
+        
+        // Fix: Use setGState with an object literal
+        pdf.setGState({ opacity: 0.5 });
+        
         pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-        pdf.setGState(new pdf.GState({ opacity: 1 }));
+        
+        // Fix: Use setGState with an object literal
+        pdf.setGState({ opacity: 1 });
       }
 
       page.blocks.forEach((block) => {

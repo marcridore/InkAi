@@ -13,31 +13,24 @@ import FinalBookPreview from '@/components/FinalBookPreview';
 import dynamic from 'next/dynamic';
 import ComicPreview from '@/components/ComicPreview';
 import SlideshowPreview from '@/components/SlideshowPreview';
-import { LanguageVersion, PageContent, ComicPage, Page } from '@/types';
+import { LanguageVersion, PageContent, ComicPage, Block } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import EditableBookPreview from '@/components/EditableBookPreview';
-import { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType } from 'docx';
 import { saveAs } from 'file-saver';
 import Image from 'next/image';
 import TranslationManager from '@/components/TranslationManager';
 import PreviewSelector from '@/components/PreviewSelector';
-import { translatePageContent, translateAllContent, updateTranslation } from '@/lib/translationHelpers';
-import debounce from 'lodash/debounce';
-import { Button } from "@/components/ui/button";
-import TranslationProgressIndicator from '@/components/TranslationProgressIndicator';
-import { Globe } from 'lucide-react'; // Import the Globe icon
+import { toast } from 'react-hot-toast';
+import { Globe } from 'lucide-react';
 import { createHash } from 'crypto';
 import { useTranslation } from '@/hooks/useTranslation';
-import { generateText } from '@/lib/together'; // Import the generateText function
+import { generateText } from '@/lib/together';
+import { generatePDF, generateDOCX, downloadEPUB } from '@/lib/helpers';
+import TranslationProgressIndicator from '@/components/TranslationProgressIndicator';
+import { Button } from '@/components/ui/button'; // Add this import
 
 // Use dynamic import for MagazinePreview
 const MagazinePreview = dynamic(() => import('@/components/MagazinePreview'), { ssr: false });
-
-// Add this function above where it's used
-function determineSize(block: BlockType): SizeType {
-  // Implement your size determination logic here
-  return { width: 100, height: 200 }; // Example return value
-}
 
 type SizeType = {
   width: number;
@@ -138,13 +131,6 @@ export default function Home() {
     addNewPage();
   };
 
-  const debouncedTranslate = useCallback(
-    debounce((language: string, pageIndex: number, content: PageContent) => {
-      translateContent(language, pageIndex, content);
-    }, 1000),
-    []
-  );
-
   const updatePageContent = async (language: string, pageIndex: number, newContent: PageContent) => {
     setLanguageVersions((prevVersions) => {
       const updatedVersions = [...prevVersions];
@@ -156,8 +142,6 @@ export default function Home() {
 
       return updatedVersions;
     });
-
-    // Remove automatic translation here
   };
 
   const hashContent = (content: string): string => {
@@ -165,192 +149,8 @@ export default function Home() {
   };
 
   const handleTranslateAllContent = () => {
-    console.log("Translate All Content button clicked"); // Add this log
+    console.log("Translate All Content button clicked");
     translateAllContent('English', targetLanguages.filter(lang => lang !== 'English'));
-  };
-
-  // Function to download the book (implementation can be added)
-  const downloadBook = async (format: 'docx' | 'pdf' | 'epub') => {
-    try {
-      setIsGeneratingDocx(true);
-  
-      // Get the pages for the active language
-      const currentVersion = languageVersions.find((v) => v.language === activeLanguage);
-      const pages = currentVersion ? currentVersion.pages : [];
-  
-      if (format === 'docx') {
-        await downloadDOCX(pages);
-      } else if (format === 'pdf') {
-        const pdf = generatePDF(pages);
-        pdf.save(`storybook_${activeLanguage}.pdf`);
-      } else if (format === 'epub') {
-        await downloadEPUB(pages);
-      }
-    } catch (error) {
-      console.error(`Error generating ${format.toUpperCase()}:`, error);
-      alert(
-        `An error occurred while generating the ${format.toUpperCase()} document. Please try again.`
-      );
-    } finally {
-      setIsGeneratingDocx(false);
-    }
-  };
-
-  const downloadDOCX = async (pages: PageContent[]) => {
-    try {
-      setIsGeneratingDocx(true);
-  
-      const doc = new Document({
-        sections: [{
-          properties: {},
-          children: [
-            new Paragraph({
-              children: [new TextRun({ text: `Storybook ${activeLanguage}`, bold: true, size: 24 })],
-              alignment: AlignmentType.CENTER,
-            }),
-          ],
-        }],
-      });
-  
-      for (const page of pages) {
-        const pageChildren = [];
-  
-        for (const block of page.blocks) {
-          if (block.type === 'text') {
-            pageChildren.push(
-              new Paragraph({
-                children: [new TextRun(stripHtmlTags(block.content))],
-              }),
-            );
-          } else if (block.type === 'image' && block.content) {
-            try {
-              const base64Data = block.content.b64_json;
-              if (base64Data) {
-                const imageBuffer = Buffer.from(base64Data, 'base64');
-                pageChildren.push(
-                  new Paragraph({
-                    children: [
-                      new ImageRun({
-                        data: imageBuffer,
-                        transformation: {
-                          width: 500,
-                          height: 300,
-                        },
-                      }),
-                    ],
-                  }),
-                );
-              } else {
-                console.warn('Image data is missing for an image block');
-                pageChildren.push(
-                  new Paragraph({
-                    children: [new TextRun('[Image placeholder]')],
-                  }),
-                );
-              }
-            } catch (imageError) {
-              console.error('Error adding image:', imageError);
-              pageChildren.push(
-                new Paragraph({
-                  children: [new TextRun('Error: Unable to add image')],
-                }),
-              );
-            }
-          }
-        }
-  
-        doc.addSection({
-          properties: {},
-          children: pageChildren,
-        });
-      }
-  
-      const buffer = await Packer.toBlob(doc);
-      saveAs(buffer, `storybook_${activeLanguage}.docx`);
-    } catch (error) {
-      console.error('Error generating DOCX:', error);
-      alert('Failed to generate DOCX. Please try again.');
-    } finally {
-      setIsGeneratingDocx(false);
-    }
-  };
-
-  // Helper function to generate the PDF document
-  const generatePDF = (pages: PageContent[]) => {
-    const pdf = new jsPDF();
-
-    pages.forEach((page, pageIndex) => {
-      if (pageIndex > 0) {
-        pdf.addPage();
-      }
-      let yOffset = 20;
-
-      page.blocks.forEach((block) => {
-        if (block.type === 'text') {
-          const text = stripHtmlTags(block.content);
-          pdf.setFontSize(12);
-          const splitText = pdf.splitTextToSize(text, 170);
-          pdf.text(splitText, 20, yOffset);
-          yOffset += splitText.length * 7;
-        } else if (block.type === 'image' && block.content) {
-          try {
-            pdf.addImage(
-              `data:image/png;base64,${block.content.b64_json}`,
-              'PNG',
-              20,
-              yOffset,
-              170,
-              100
-            );
-            yOffset += 110;
-          } catch (error) {
-            console.error('Error adding image to PDF:', error);
-          }
-        }
-
-        if (yOffset > 280) {
-          pdf.addPage();
-          yOffset = 20;
-        }
-      });
-    });
-
-    return pdf;
-  };
-
-  // Helper function to generate the EPUB document
-  const downloadEPUB = async (pages: PageContent[]) => {
-    try {
-      const response = await fetch('/api/generate-epub', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pages,
-          title: `Storybook ${activeLanguage}`,
-          language: activeLanguage,
-        }),
-      });
-  
-      if (!response.ok) {
-        console.error('Error generating EPUB:', response.statusText);
-        throw new Error('Failed to generate EPUB');
-      }
-  
-      const blob = await response.blob();
-      saveAs(blob, `storybook_${activeLanguage}.epub`);
-    } catch (error) {
-      console.error('Error downloading EPUB:', error);
-      alert('Failed to download EPUB. Please try again.');
-    }
-  };
-
-  // Helper function to strip HTML tags
-  const stripHtmlTags = (html: string) => {
-    const tmp = document.createElement('DIV');
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || '';
   };
 
   // Function to convert pages to comic format
@@ -406,6 +206,40 @@ export default function Home() {
 
     const newContent = await generateText(selectedText, storyPrompt, previousContent, defaultLanguage);
     return newContent;
+  };
+
+  const downloadBook = async (format: 'pdf' | 'docx' | 'epub') => {
+    try {
+      setIsGeneratingDocx(true);
+      const currentVersion = languageVersions.find((v) => v.language === activeLanguage);
+      const pages = currentVersion ? currentVersion.pages : [];
+  
+      let fileBlob: Blob | null = null;
+  
+      switch (format) {
+        case 'pdf':
+          fileBlob = generatePDF(pages, activeLanguage);
+          break;
+        case 'docx':
+          fileBlob = await generateDOCX(pages, activeLanguage);
+          break;
+        case 'epub':
+          fileBlob = await downloadEPUB(pages, activeLanguage);
+          break;
+      }
+  
+      if (fileBlob) {
+        saveAs(fileBlob, `storybook_${activeLanguage}.${format}`);
+        toast.success(`${format.toUpperCase()} downloaded successfully!`);
+      } else {
+        throw new Error('Failed to generate file.');
+      }
+    } catch (error) {
+      console.error(`Error generating ${format.toUpperCase()}:`, error);
+      toast.error(`Failed to generate ${format.toUpperCase()}. Please try again.`);
+    } finally {
+      setIsGeneratingDocx(false);
+    }
   };
 
   return (
@@ -549,7 +383,7 @@ export default function Home() {
                   iterativeMode={iterativeMode}
                   isGeneratingDocx={isGeneratingDocx}
                   storyPrompt={storyPrompt}
-                  generateContent={generateContent}
+                  generateContent={generateContent}     
                 />
               </div>
 
@@ -573,7 +407,7 @@ export default function Home() {
                     pages={languageVersions.find((v) => v.language === activeLanguage)?.pages || []}
                     language={activeLanguage}
                     updatePageContent={(pageIndex, newPage) => 
-                      updatePageContent(activeLanguage, pageIndex, newPage as PageContent)
+                      updatePageContent(activeLanguage, pageIndex, newPage)
                     }
                   />
                 )}
@@ -587,7 +421,7 @@ export default function Home() {
                     pages={languageVersions.find((v) => v.language === activeLanguage)?.pages || []}
                     language={activeLanguage}
                     updatePageContent={(pageIndex, newPage) => 
-                      updatePageContent(activeLanguage, pageIndex, newPage as PageContent)
+                      updatePageContent(activeLanguage, pageIndex, newPage)
                     }
                     availableLanguages={availableLanguages}
                   />
@@ -609,7 +443,7 @@ export default function Home() {
   );
 }
 
-function FeatureCard({ icon, title, description }) {
+function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 text-center">
       <div className="text-4xl mb-4">{icon}</div>
@@ -619,7 +453,7 @@ function FeatureCard({ icon, title, description }) {
   );
 }
 
-function StepCard({ number, title, description }) {
+function StepCard({ number, title, description }: { number: string; title: string; description: string }) {
   return (
     <div className="flex flex-col items-center mb-8 md:mb-0">
       <div className="bg-indigo-600 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold mb-4">
@@ -631,7 +465,7 @@ function StepCard({ number, title, description }) {
   );
 }
 
-function Testimonial({ quote, author }) {
+function Testimonial({ quote, author }: { quote: string; author: string }) {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 max-w-md">
       <p className="text-indigo-700 italic mb-4">"{quote}"</p>
@@ -639,3 +473,4 @@ function Testimonial({ quote, author }) {
     </div>
   );
 }
+

@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Smartphone, Tablet, Monitor, X, Info } from 'lucide-react';
 
-type Block = {
-  type: string;
-  content: any;
-};
+import { Block } from '@/types'; 
 
 type PageContent = {
   blocks: Block[];
