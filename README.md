@@ -1,6 +1,6 @@
-# StoryForge: AI-Powered Content Editor for Creators
+# InkAi: AI-Powered Content Editor for Creators
 
-StoryForge is an innovative AI-powered content editor inspired by [Blinkshot](https://github.com/Nutlope/blinkshot). Our project takes the concept further, offering a comprehensive suite of tools for content creators to generate, edit, translate, and publish their work in various formats.
+InkAi is an innovative AI-powered content editor inspired by [Blinkshot](https://github.com/Nutlope/blinkshot). Our project takes the concept further, offering a comprehensive suite of tools for content creators to generate, edit, translate, and publish their work in various formats.
 
 ## Features
 
