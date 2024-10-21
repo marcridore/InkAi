@@ -19,7 +19,7 @@ InkAi is an innovative AI-powered content editor inspired by [Blinkshot](https:/
 - Prisma with PostgreSQL for database management(to do)
 
 You can see a demo here :
-https://ink-ai-eight.vercel.app
+https://www.inkai.online
 
 ## Getting Started
 
