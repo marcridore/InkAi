@@ -18,6 +18,9 @@ InkAi is an innovative AI-powered content editor inspired by [Blinkshot](https:/
 - Azure Blob Storage for image storage(to do)
 - Prisma with PostgreSQL for database management(to do)
 
+You can see a demo here :
+https://ink-ai-eight.vercel.app
+
 ## Getting Started
 
 1. Clone the repo
