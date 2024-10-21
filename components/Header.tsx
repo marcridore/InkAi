@@ -23,7 +23,7 @@ const Header: React.FC<HeaderProps> = ({ userAPIKey, setUserAPIKey }) => {
           >
         
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Story<span className="text-yellow-300">Forge</span>
+              Ink<span className="text-yellow-300">AI</span>
             </h1>
           </motion.div>
           
